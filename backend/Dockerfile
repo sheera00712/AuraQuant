@@ -2,18 +2,19 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-# Install curl for health checks and ensure pip is available
+# Install system dependencies
 RUN apt-get update && apt-get install -y curl && \
+    rm -rf /var/lib/apt/lists/* && \
     python -m ensurepip --upgrade
 
-# Copy requirements first for better caching
-COPY requirements.txt .
+# Copy requirements from backend directory
+COPY backend/requirements.txt .
 
-# Install dependencies using python -m pip to be explicit
+# Install Python dependencies
 RUN python -m pip install --no-cache-dir -r requirements.txt
 
-# Copy application code
-COPY . .
+# Copy backend application code
+COPY backend/ .
 
 # Expose port
 EXPOSE 8000
