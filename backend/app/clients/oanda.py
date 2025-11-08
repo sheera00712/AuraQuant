@@ -5,7 +5,11 @@ from typing import Optional, Dict, Any
 class OANDAClient:
     def __init__(self):
         self.api_key = os.getenv('0771210553651bc4cf25ff1fb5a4f6d1-ac4e39abaedcb2622d401f3326fe343f')
-        self.demo_base_url = "https://api-fxpractice.oanda.com/v3"
+        # Try both possible demo URLs
+        self.demo_base_urls = [
+            "https://api-fxpractice.oanda.com/v3",
+            "https://api-fxtrade.oanda.com/v3"
+        ]
         
     def _make_request(self, endpoint: str, method: str = "GET") -> Optional[Dict[str, Any]]:
         """Helper method to make authenticated requests to OANDA API"""
@@ -14,33 +18,41 @@ class OANDAClient:
             "Content-Type": "application/json"
         }
         
-        url = f"{self.demo_base_url}/{endpoint}"
+        # Try each base URL until one works
+        for base_url in self.demo_base_urls:
+            url = f"{base_url}/{endpoint}"
+            try:
+                response = requests.request(method, url, headers=headers)
+                print(f"Trying URL: {url}, Status: {response.status_code}")
+                
+                if response.status_code == 200:
+                    return response.json()
+                elif response.status_code == 401:
+                    print("API Key invalid - check if it's a demo key")
+                    
+            except requests.exceptions.RequestException as e:
+                print(f"OANDA API Error for {base_url}: {e}")
+                continue
         
-        try:
-            response = requests.request(method, url, headers=headers)
-            response.raise_for_status()
-            return response.json()
-        except requests.exceptions.RequestException as e:
-            print(f"OANDA API Error: {e}")
-            return None
+        return None
     
     async def get_account_info(self):
         """Get basic account information to test API connectivity"""
         return self._make_request("accounts")
     
     async def get_instruments(self, instruments: str = "EUR_USD,GBP_USD,USD_JPY"):
-    """Get instrument details for major Forex pairs"""
-    # Try the standard instruments endpoint
-    response = self._make_request(f"instruments?instruments={instruments}")
-    
-    # If that doesn't work, try through accounts endpoint
-    if not response or 'instruments' not in response:
-        accounts_response = self._make_request("accounts")
-        if accounts_response and 'accounts' in accounts_response and accounts_response['accounts']:
-            account_id = accounts_response['accounts'][0]['id']
-            response = self._make_request(f"accounts/{account_id}/instruments?instruments={instruments}")
-    
-    return response
+        """Get instrument details for major Forex pairs"""
+        # Try the standard instruments endpoint
+        response = self._make_request(f"instruments?instruments={instruments}")
+        
+        # If that doesn't work, try through accounts endpoint
+        if not response or 'instruments' not in response:
+            accounts_response = self._make_request("accounts")
+            if accounts_response and 'accounts' in accounts_response and accounts_response['accounts']:
+                account_id = accounts_response['accounts'][0]['id']
+                response = self._make_request(f"accounts/{account_id}/instruments?instruments={instruments}")
+        
+        return response
     
     async def get_prices(self, instruments: str = "EUR_USD,GBP_USD,USD_JPY"):
         """Get current pricing data for specified instruments"""
@@ -58,19 +70,8 @@ oanda_client = OANDAClient()
 async def get_account_info():
     return await oanda_client.get_account_info()
 
-async def get_instruments(self, instruments: str = "EUR_USD,GBP_USD,USD_JPY"):
-    """Get instrument details for major Forex pairs"""
-    # Try the standard instruments endpoint
-    response = self._make_request(f"instruments?instruments={instruments}")
-    
-    # If that doesn't work, try through accounts endpoint
-    if not response or 'instruments' not in response:
-        accounts_response = self._make_request("accounts")
-        if accounts_response and 'accounts' in accounts_response and accounts_response['accounts']:
-            account_id = accounts_response['accounts'][0]['id']
-            response = self._make_request(f"accounts/{account_id}/instruments?instruments={instruments}")
-    
-    return response
+async def get_instruments(instruments: str = "EUR_USD,GBP_USD,USD_JPY"):
+    return await oanda_client.get_instruments(instruments)
 
 async def get_prices(instruments: str = "EUR_USD,GBP_USD,USD_JPY"):
     return await oanda_client.get_prices(instruments)
