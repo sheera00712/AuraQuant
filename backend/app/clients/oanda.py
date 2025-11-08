@@ -30,11 +30,17 @@ class OANDAClient:
     
     async def get_instruments(self, instruments: str = "EUR_USD,GBP_USD,USD_JPY"):
         """Get instrument details for major Forex pairs"""
+        # Use the correct instruments endpoint
         return self._make_request(f"instruments?instruments={instruments}")
     
     async def get_prices(self, instruments: str = "EUR_USD,GBP_USD,USD_JPY"):
         """Get current pricing data for specified instruments"""
-        return self._make_request(f"accounts/your-account-id/pricing?instruments={instruments}")
+        # First get account ID, then use it for pricing
+        accounts_data = self._make_request("accounts")
+        if accounts_data and 'accounts' in accounts_data and accounts_data['accounts']:
+            account_id = accounts_data['accounts'][0]['id']
+            return self._make_request(f"accounts/{account_id}/pricing?instruments={instruments}")
+        return None
 
 # Create a global client instance
 oanda_client = OANDAClient()
@@ -43,8 +49,8 @@ oanda_client = OANDAClient()
 async def get_account_info():
     return await oanda_client.get_account_info()
 
-async def get_instruments(self, instruments: str = "EUR_USD,GBP_USD,USD_JPY"):
-    """Get instrument details for major Forex pairs"""
-    # Simple instruments endpoint that doesn't need account ID
-    endpoint = f"instruments?instruments={instruments}"
-    return self._make_request(endpoint)
+async def get_instruments(instruments: str = "EUR_USD,GBP_USD,USD_JPY"):
+    return await oanda_client.get_instruments(instruments)
+
+async def get_prices(instruments: str = "EUR_USD,GBP_USD,USD_JPY"):
+    return await oanda_client.get_prices(instruments)
