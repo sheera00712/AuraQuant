@@ -48,3 +48,22 @@ async def test_oanda():
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)
+
+@app.get("/test-oanda")
+async def test_oanda():
+    """Test OANDA API connection with real data"""
+    try:
+        from app.clients.oanda import get_instruments
+        instruments = await get_instruments("EUR_USD,GBP_USD,USD_JPY")
+        
+        if instruments and 'instruments' in instruments:
+            return {
+                "status": "success", 
+                "message": "OANDA API connection successful!",
+                "available_pairs": [inst['name'] for inst in instruments['instruments']],
+                "total_instruments": len(instruments['instruments'])
+            }
+        else:
+            return {"status": "error", "message": "Failed to fetch instruments from OANDA"}
+    except Exception as e:
+        return {"status": "error", "message": f"OANDA connection failed: {str(e)}"}
