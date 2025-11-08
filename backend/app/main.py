@@ -34,23 +34,6 @@ async def env_check():
 
 @app.get("/test-oanda")
 async def test_oanda():
-    """Test OANDA API connection"""
-    try:
-        # Simple test without actual API calls for now
-        return {
-            "status": "success", 
-            "message": "OANDA test endpoint ready - API keys needed"
-        }
-    except Exception as e:
-        return {"status": "error", "message": str(e)}
-
-# Only run for local development
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
-
-@app.get("/test-oanda")
-async def test_oanda():
     """Test OANDA API connection with real data"""
     try:
         from app.clients.oanda import get_instruments
