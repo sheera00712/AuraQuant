@@ -43,5 +43,8 @@ oanda_client = OANDAClient()
 async def get_account_info():
     return await oanda_client.get_account_info()
 
-async def get_instruments(instruments: str = "EUR_USD,GBP_USD,USD_JPY"):
-    return await oanda_client.get_instruments(instruments)
+async def get_instruments(self, instruments: str = "EUR_USD,GBP_USD,USD_JPY"):
+    """Get instrument details for major Forex pairs"""
+    # Simple instruments endpoint that doesn't need account ID
+    endpoint = f"instruments?instruments={instruments}"
+    return self._make_request(endpoint)
