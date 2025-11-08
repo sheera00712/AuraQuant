@@ -7,14 +7,14 @@ RUN apt-get update && apt-get install -y curl && \
     rm -rf /var/lib/apt/lists/* && \
     python -m ensurepip --upgrade
 
-# Copy requirements from backend directory
-COPY backend/requirements.txt .
+# Copy requirements (Dockerfile is already in backend/, so same directory)
+COPY requirements.txt .
 
 # Install Python dependencies
 RUN python -m pip install --no-cache-dir -r requirements.txt
 
-# Copy backend application code
-COPY backend/ .
+# Copy application code
+COPY . .
 
 # Expose port
 EXPOSE 8000
