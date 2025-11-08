@@ -29,9 +29,18 @@ class OANDAClient:
         return self._make_request("accounts")
     
     async def get_instruments(self, instruments: str = "EUR_USD,GBP_USD,USD_JPY"):
-        """Get instrument details for major Forex pairs"""
-        # Use the correct instruments endpoint
-        return self._make_request(f"instruments?instruments={instruments}")
+    """Get instrument details for major Forex pairs"""
+    # Try the standard instruments endpoint
+    response = self._make_request(f"instruments?instruments={instruments}")
+    
+    # If that doesn't work, try through accounts endpoint
+    if not response or 'instruments' not in response:
+        accounts_response = self._make_request("accounts")
+        if accounts_response and 'accounts' in accounts_response and accounts_response['accounts']:
+            account_id = accounts_response['accounts'][0]['id']
+            response = self._make_request(f"accounts/{account_id}/instruments?instruments={instruments}")
+    
+    return response
     
     async def get_prices(self, instruments: str = "EUR_USD,GBP_USD,USD_JPY"):
         """Get current pricing data for specified instruments"""
@@ -49,8 +58,19 @@ oanda_client = OANDAClient()
 async def get_account_info():
     return await oanda_client.get_account_info()
 
-async def get_instruments(instruments: str = "EUR_USD,GBP_USD,USD_JPY"):
-    return await oanda_client.get_instruments(instruments)
+async def get_instruments(self, instruments: str = "EUR_USD,GBP_USD,USD_JPY"):
+    """Get instrument details for major Forex pairs"""
+    # Try the standard instruments endpoint
+    response = self._make_request(f"instruments?instruments={instruments}")
+    
+    # If that doesn't work, try through accounts endpoint
+    if not response or 'instruments' not in response:
+        accounts_response = self._make_request("accounts")
+        if accounts_response and 'accounts' in accounts_response and accounts_response['accounts']:
+            account_id = accounts_response['accounts'][0]['id']
+            response = self._make_request(f"accounts/{account_id}/instruments?instruments={instruments}")
+    
+    return response
 
 async def get_prices(instruments: str = "EUR_USD,GBP_USD,USD_JPY"):
     return await oanda_client.get_prices(instruments)
