@@ -82,3 +82,37 @@ async def test_oanda():
             "message": f"OANDA connection failed: {str(e)}",
             "details": error_details
         }
+
+@app.get("/debug-oanda")
+async def debug_oanda():
+    """Debug OANDA API connection"""
+    try:
+        from app.clients.oanda import oanda_client
+        import json
+        
+        # Test different endpoints
+        endpoints = [
+            "accounts",
+            "instruments?instruments=EUR_USD,GBP_USD,USD_JPY",
+            "accounts?instruments=EUR_USD,GBP_USD,USD_JPY"
+        ]
+        
+        results = {}
+        for endpoint in endpoints:
+            response = oanda_client._make_request(endpoint)
+            results[endpoint] = response
+        
+        return {
+            "status": "debug",
+            "api_key_preview": f"{os.getenv('OANDA_API_KEY', '')[:8]}...",
+            "base_url": oanda_client.demo_base_url,
+            "results": results
+        }
+        
+    except Exception as e:
+        import traceback
+        return {
+            "status": "error",
+            "message": str(e),
+            "traceback": traceback.format_exc()
+        }
