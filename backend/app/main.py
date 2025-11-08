@@ -50,3 +50,35 @@ async def test_oanda():
             return {"status": "error", "message": "Failed to fetch instruments from OANDA"}
     except Exception as e:
         return {"status": "error", "message": f"OANDA connection failed: {str(e)}"}
+
+@app.get("/test-oanda")
+async def test_oanda():
+    """Test OANDA API connection with real data"""
+    try:
+        from app.clients.oanda import get_instruments
+        print(f"OANDA API Key: {os.getenv('OANDA_API_KEY')[:10]}...")  # Log first 10 chars
+        
+        instruments = await get_instruments("EUR_USD,GBP_USD,USD_JPY")
+        print(f"OANDA Response: {instruments}")
+        
+        if instruments and 'instruments' in instruments:
+            return {
+                "status": "success", 
+                "message": "OANDA API connection successful!",
+                "available_pairs": [inst['name'] for inst in instruments['instruments'][:5]],  # First 5 only
+                "total_instruments": len(instruments['instruments'])
+            }
+        else:
+            return {
+                "status": "error", 
+                "message": "Failed to fetch instruments from OANDA",
+                "response": instruments
+            }
+    except Exception as e:
+        import traceback
+        error_details = traceback.format_exc()
+        return {
+            "status": "error", 
+            "message": f"OANDA connection failed: {str(e)}",
+            "details": error_details
+        }
