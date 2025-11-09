@@ -153,3 +153,19 @@ async def get_technical_analysis(instrument: str = "EUR_USD"):
         
     except Exception as e:
         return {"status": "error", "message": str(e)}
+
+@app.get("/signals/history")
+async def get_signal_history(instrument: str = None, hours: int = 24):
+    """Get recent signal history"""
+    try:
+        from app.analysis.signal_tracker import signal_tracker
+        recent_signals = signal_tracker.get_recent_signals(instrument, hours)
+        
+        return {
+            "status": "success",
+            "total_signals": len(recent_signals),
+            "timeframe_hours": hours,
+            "signals": recent_signals[-10:]  # Last 10 signals only
+        }
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
