@@ -90,3 +90,36 @@ async def get_technical_analysis(instrument: str = "EUR_USD"):
         
     except Exception as e:
         return {"status": "error", "message": str(e)}
+@app.get("/signals/dashboard")
+async def get_signals_dashboard():
+    """Get trading signals for all major Forex pairs"""
+    try:
+        from app.clients.forex_client import forex_client
+        from app.analysis.technical_analyzer import technical_analyzer
+        
+        major_pairs = ["EUR_USD", "GBP_USD", "USD_JPY", "USD_CHF", "AUD_USD", "USD_CAD"]
+        
+        signals = {}
+        for pair in major_pairs:
+            try:
+                # Get historical data
+                historical_data = forex_client.get_historical_data(pair, count=100, granularity="H1")
+                
+                if not historical_data.empty:
+                    # Generate signal
+                    signal = technical_analyzer.generate_signal(historical_data)
+                    signals[pair] = signal
+                else:
+                    signals[pair] = {"error": "No data available"}
+                    
+            except Exception as e:
+                signals[pair] = {"error": str(e)}
+        
+        return {
+            "status": "success",
+            "timestamp": pd.Timestamp.now().isoformat(),
+            "signals": signals
+        }
+        
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
