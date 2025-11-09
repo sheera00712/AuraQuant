@@ -1,14 +1,28 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 import os
+import pandas as pd
 
+# Create the FastAPI app instance FIRST
 app = FastAPI(title="AuraQuant API", version="0.1.0")
 
+# Then add middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # For development only
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Now define routes - app is already defined
 @app.get("/")
 async def root():
     return {"message": "Welcome to AuraQuant API"}
 
 @app.get("/health")
 async def health_check():
+    """Health check endpoint for deployment verification"""
     return {"status": "ok", "service": "AuraQuant API"}
 
 @app.get("/test-oanda")
@@ -26,8 +40,6 @@ async def test_oanda_simple():
             "status": "error",
             "message": f"Test failed: {str(e)}"
         }
-
-# Remove the problematic debug endpoint for now
 
 @app.get("/forex/instruments")
 async def get_forex_instruments():
@@ -90,6 +102,7 @@ async def get_technical_analysis(instrument: str = "EUR_USD"):
         
     except Exception as e:
         return {"status": "error", "message": str(e)}
+
 @app.get("/signals/dashboard")
 async def get_signals_dashboard():
     """Get trading signals for all major Forex pairs"""
@@ -124,48 +137,27 @@ async def get_signals_dashboard():
     except Exception as e:
         return {"status": "error", "message": str(e)}
 
-@app.get("/analysis/{instrument}")
-async def get_technical_analysis(instrument: str = "EUR_USD"):
-    """Get comprehensive technical analysis and trading signals"""
+@app.get("/signals/history")
+async def get_signal_history():
+    """Get recent signal history"""
     try:
-        from app.clients.forex_client import forex_client
-        from app.analysis.technical_analyzer import technical_analyzer
-        from app.analysis.signal_tracker import signal_tracker
-        
-        # Get historical data for analysis
-        historical_data = forex_client.get_historical_data(instrument, count=100, granularity="H1")
-        
-        if historical_data.empty:
-            return {"status": "error", "message": "No historical data available"}
-        
-        # Generate trading signal
-        signal = technical_analyzer.generate_signal(historical_data)
-        
-        # Track the signal
-        signal_tracker.add_signal(instrument, signal)
-        
+        # Simple history endpoint for now
         return {
             "status": "success",
-            "instrument": instrument,
-            "signal": signal,
-            "data_points": len(historical_data)
+            "message": "Signal history tracking will be implemented in next sprint",
+            "feature": "Coming soon - real-time signal tracking and accuracy analytics"
         }
-        
     except Exception as e:
         return {"status": "error", "message": str(e)}
 
-@app.get("/signals/history")
-async def get_signal_history(instrument: str = None, hours: int = 24):
-    """Get recent signal history"""
+# Test all imports on startup
+@app.on_event("startup")
+async def startup_event():
+    print("AuraQuant API starting up...")
     try:
-        from app.analysis.signal_tracker import signal_tracker
-        recent_signals = signal_tracker.get_recent_signals(instrument, hours)
-        
-        return {
-            "status": "success",
-            "total_signals": len(recent_signals),
-            "timeframe_hours": hours,
-            "signals": recent_signals[-10:]  # Last 10 signals only
-        }
+        # Test that all modules can be imported
+        from app.clients.forex_client import forex_client
+        from app.analysis.technical_analyzer import technical_analyzer
+        print("✅ All modules imported successfully")
     except Exception as e:
-        return {"status": "error", "message": str(e)}
+        print(f"❌ Import error: {e}")
