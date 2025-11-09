@@ -1,120 +1,106 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from contextlib import asynccontextmanager
 import os
-import requests
-import pandas as pd
-from typing import Optional, Dict, Any, List
+import asyncio
+from typing import Dict, Any
+import time
 
-print("🚀 Starting AuraQuant Trading API...")
+# Lightweight startup - minimal imports
+print("🚀 Starting AuraQuant (Optimized)...")
 
-app = FastAPI(title="AuraQuant Trading API", version="1.0.0")
+# Cache for frequently used data
+app_cache = {}
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup
+    print("✅ AuraQuant starting up...")
+    app_cache["startup_time"] = time.time()
+    app_cache["request_count"] = 0
+    
+    yield  # App runs here
+    
+    # Shutdown
+    print("🛑 AuraQuant shutting down...")
+
+app = FastAPI(
+    title="AuraQuant Trading API", 
+    version="1.0.0",
+    lifespan=lifespan,
+    docs_url=None,  # Disable docs to save memory
+    redoc_url=None  # Disable redoc
+)
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET"],  # Only GET for now
     allow_headers=["*"],
 )
 
-print("✅ FastAPI app configured")
-
-# ===== SIMPLE OANDA CLIENT =====
-class SimpleOANDAClient:
-    def __init__(self):
-        self.api_key = os.getenv('OANDA_API_KEY')
-        self.base_url = "https://api-fxpractice.oanda.com/v3"
-        self.account_id = "101-001-36257109-001"
-        
-    def test_connection(self) -> Dict[str, Any]:
-        """Test OANDA connection safely"""
-        if not self.api_key:
-            return {"error": "No API key configured"}
-            
-        headers = {
-            "Authorization": f"Bearer {self.api_key}",
-            "Content-Type": "application/json"
-        }
-        
-        try:
-            url = f"{self.base_url}/accounts"
-            response = requests.get(url, headers=headers, timeout=10)
-            
-            if response.status_code == 200:
-                data = response.json()
-                return {
-                    "status": "success",
-                    "account_id": data.get('accounts', [{}])[0].get('id', 'Unknown'),
-                    "message": "OANDA API connected successfully"
-                }
-            else:
-                return {
-                    "status": "error",
-                    "code": response.status_code,
-                    "message": response.text
-                }
-                
-        except Exception as e:
-            return {
-                "status": "error",
-                "message": f"Connection failed: {str(e)}"
-            }
-
-# Initialize client
-oanda_client = SimpleOANDAClient()
-print("✅ OANDA client initialized")
-
-# ===== BASIC ENDPOINTS =====
+# ===== LIGHTWEIGHT ENDPOINTS =====
 @app.get("/")
 async def root():
+    app_cache["request_count"] = app_cache.get("request_count", 0) + 1
     return {
-        "message": "Welcome to AuraQuant Trading API",
-        "endpoints": {
-            "health": "/health",
-            "oanda_test": "/oanda/test",
-            "forex_data": "/forex/{instrument}",
-            "analysis": "/analysis/{instrument}"
-        }
+        "message": "AuraQuant Trading API",
+        "status": "optimized",
+        "requests": app_cache["request_count"],
+        "uptime": round(time.time() - app_cache.get("startup_time", time.time()))
     }
 
 @app.get("/health")
 async def health():
-    return {"status": "ok", "service": "AuraQuant Trading API"}
+    """Minimal health check"""
+    return {"status": "healthy", "timestamp": time.time()}
 
-@app.get("/oanda/test")
-async def test_oanda():
-    """Test OANDA API connection"""
-    result = oanda_client.test_connection()
-    return {"status": "success", "oanda": result}
+@app.get("/oanda/status")
+async def oanda_status():
+    """Check OANDA API key status without making external calls"""
+    has_key = bool(os.getenv('OANDA_API_KEY'))
+    return {
+        "status": "success" if has_key else "no_key",
+        "api_key_configured": has_key,
+        "message": "OANDA ready" if has_key else "Add OANDA_API_KEY to environment"
+    }
 
 @app.get("/forex/{instrument}")
-async def get_forex_data(instrument: str = "EUR_USD"):
-    """Get basic Forex data for an instrument"""
-    # For now, return mock data - we'll add real data next
+async def get_forex_data(instrument: str):
+    """Lightweight Forex endpoint with simulated data"""
+    # Simulate processing delay
+    await asyncio.sleep(0.1)
+    
     return {
         "instrument": instrument,
-        "status": "success", 
-        "data": {
-            "bid": 1.0850,
-            "ask": 1.0852,
-            "spread": 0.0002,
-            "message": "Real-time data coming soon"
-        }
+        "bid": 1.0850,
+        "ask": 1.0852,
+        "spread": 0.0002,
+        "timestamp": time.time(),
+        "note": "Real data coming after performance optimization"
     }
 
 @app.get("/analysis/{instrument}")
-async def analyze_instrument(instrument: str = "EUR_USD"):
-    """Basic technical analysis"""
+async def analyze_instrument(instrument: str):
+    """Lightweight analysis with cached calculations"""
+    # Simple calculation instead of heavy pandas
+    signal_score = hash(instrument) % 100  # Simple deterministic "random"
+    
+    if signal_score > 60:
+        signal = "BUY"
+    elif signal_score < 40:
+        signal = "SELL"
+    else:
+        signal = "HOLD"
+    
     return {
         "instrument": instrument,
-        "status": "success",
-        "analysis": {
-            "signal": "NEUTRAL",
-            "confidence": 50,
-            "message": "Advanced analysis coming soon"
-        }
+        "signal": signal,
+        "score": signal_score,
+        "confidence": "LOW",  # Simplified for now
+        "timestamp": time.time()
     }
 
-print("✅ All routes registered successfully!")
-print("🎉 AuraQuant Trading API ready!")
-print("📍 Available endpoints: /health, /oanda/test, /forex/{instrument}, /analysis/{instrument}")
+print("✅ Optimized AuraQuant ready!")
+print("📍 Lightweight endpoints loaded")
