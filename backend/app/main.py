@@ -1,32 +1,29 @@
 from fastapi import FastAPI
-import os
 
-print("🚀 Starting AuraQuant API...")
+print("🔧 DEBUG: Starting application...")
 
-# Create the app
-app = FastAPI(title="AuraQuant API", version="1.0.0")
+app = FastAPI(title="AuraQuant", version="1.0.0")
 
-print("✅ FastAPI app created")
+print("🔧 DEBUG: App instance created")
 
 @app.get("/")
 async def root():
-    return {"message": "Welcome to AuraQuant API"}
+    print("🔧 DEBUG: / endpoint called")
+    return {"message": "Root endpoint working"}
 
 @app.get("/health")
-async def health_check():
-    return {"status": "ok", "service": "AuraQuant API"}
+async def health():
+    print("🔧 DEBUG: /health endpoint called") 
+    return {"status": "ok"}
 
 @app.get("/test")
-async def test_endpoint():
-    return {"status": "success", "message": "Test endpoint working!"}
+async def test():
+    print("🔧 DEBUG: /test endpoint called")
+    return {"message": "Test endpoint working"}
 
 @app.get("/simple")
-async def simple_endpoint():
-    return {"status": "success", "data": "This is a simple endpoint"}
+async def simple():
+    return {"status": "success", "data": "Simple endpoint"}
 
-print("✅ Routes registered:")
-print("   - /")
-print("   - /health") 
-print("   - /test")
-print("   - /simple")
-print("🎉 AuraQuant API ready!")
+print("🔧 DEBUG: All routes registered successfully!")
+print("🔧 DEBUG: Available routes: /, /health, /test, /simple")
