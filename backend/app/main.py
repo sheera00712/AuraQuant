@@ -123,3 +123,33 @@ async def get_signals_dashboard():
         
     except Exception as e:
         return {"status": "error", "message": str(e)}
+
+@app.get("/analysis/{instrument}")
+async def get_technical_analysis(instrument: str = "EUR_USD"):
+    """Get comprehensive technical analysis and trading signals"""
+    try:
+        from app.clients.forex_client import forex_client
+        from app.analysis.technical_analyzer import technical_analyzer
+        from app.analysis.signal_tracker import signal_tracker
+        
+        # Get historical data for analysis
+        historical_data = forex_client.get_historical_data(instrument, count=100, granularity="H1")
+        
+        if historical_data.empty:
+            return {"status": "error", "message": "No historical data available"}
+        
+        # Generate trading signal
+        signal = technical_analyzer.generate_signal(historical_data)
+        
+        # Track the signal
+        signal_tracker.add_signal(instrument, signal)
+        
+        return {
+            "status": "success",
+            "instrument": instrument,
+            "signal": signal,
+            "data_points": len(historical_data)
+        }
+        
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
